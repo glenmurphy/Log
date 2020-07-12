@@ -11,9 +11,9 @@
       d.appendChild(titleNode);
       
       // https://www.d3-graph-gallery.com/graph/line_basic.html
-      var margin = {top: 40, right: 40, bottom: 40, left: 40},
-          width = 460 - margin.left - margin.right,
-          height = 400 - margin.top - margin.bottom;
+      var margin = {top: 20, right: 20, bottom: 40, left: 40},
+          width = 320 - margin.left - margin.right,
+          height = 240 - margin.top - margin.bottom;
 
       var svg = d3.select(d)
         .append("svg")
@@ -23,15 +23,16 @@
           .attr("transform",
                 "translate(" + margin.left + "," + margin.top + ")");
 
+      // d3.extent(data, function(d) { 
+      // return new Date(d.date); 
+      // })
       var x = d3.scaleTime()
-        .domain(d3.extent(data, function(d) { 
-          return new Date(d.date); 
-        }))
+        .domain([ new Date()- 1000 * 60 * 60 * 24, new Date()])
         .range([ 0, width ]);
 
       svg.append("g")
         .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x));
+        .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%H:%M")));
 
       // 
       if (!min) {
@@ -60,16 +61,21 @@
     fetch("http://avocado.glenmurphy.com:5706/?type=coconut-health&limit=200")
       .then(response => response.json())
       .then(data => {
+        // format data
         createGraph("coconut temp", data, function(d) { return d.content.temp; });
         createGraph("coconut load", data, function(d) { 
           try {return (d.content.load.recent) * 100;}
           catch(e) {return 0;}
         });
         createGraph("coconut mem usage", data, function(d) { 
-          try {return (d.content.mem.used/d.content.mem.total) * 100;}
+          try {
+            if (!d.content.mem.used) {return 0;}
+            return (d.content.mem.used/d.content.mem.total) * 100;
+          }
           catch(e) {return 0;}
         }, 0, 100);
       });
+ 
     fetch("http://avocado.glenmurphy.com:5706/?type=avocado-health&limit=200")
       .then(response => response.json())
       .then(data => {
@@ -79,9 +85,19 @@
           catch(e) {return 0;}
         });
         createGraph("avocado mem usage", data, function(d) { 
-          try {return (d.content.mem.used/d.content.mem.total) * 100;}
+          try {
+            if (!d.content.mem.used) {return 0;}
+            return (d.content.mem.used/d.content.mem.total) * 100;}
           catch(e) {return 0;}
         }, 0, 100);
+      });
+      fetch("http://avocado.glenmurphy.com:5706/?type=coconut-dump1090&limit=200")
+      .then(response => response.json())
+      .then(data => {
+        createGraph("aircraft count", data, function(d) { 
+          try {return (d.content.count);}
+          catch(e) {return 0;}
+        });
       });
   </script>
 </html>
