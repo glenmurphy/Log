@@ -1,0 +1,87 @@
+<html>
+  <script src="https://d3js.org/d3.v5.js"></script>
+  <body>
+    <div id="graph" style="background-color:#eee;"></div>
+  </body>
+  <script>
+    function createGraph(title, data, valueFn, min, max) {
+      var d = document.createElement('div');
+      var titleNode = document.createElement('div');
+      titleNode.appendChild(document.createTextNode(title));
+      d.appendChild(titleNode);
+      
+      // https://www.d3-graph-gallery.com/graph/line_basic.html
+      var margin = {top: 40, right: 40, bottom: 40, left: 40},
+          width = 460 - margin.left - margin.right,
+          height = 400 - margin.top - margin.bottom;
+
+      var svg = d3.select(d)
+        .append("svg")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+          .attr("transform",
+                "translate(" + margin.left + "," + margin.top + ")");
+
+      var x = d3.scaleTime()
+        .domain(d3.extent(data, function(d) { 
+          return new Date(d.date); 
+        }))
+        .range([ 0, width ]);
+
+      svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x));
+
+      // 
+      if (!min) {
+        min = 0
+      }
+      if (!max) {
+        max = d3.max(data, valueFn);
+      }
+      var y = d3.scaleLinear()
+        .domain([min, max])
+        .range([ height, 0 ]);
+      svg.append("g")
+        .call(d3.axisLeft(y));
+
+      svg.append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-width", 1.5)
+        .attr("d", d3.line()
+          .x(function(d) { return x(new Date(d.date)) })
+          .y(function(d) { return y(valueFn(d)) })
+          );
+      document.body.appendChild(d);
+    }
+    fetch("http://avocado.glenmurphy.com:5706/?type=coconut-health&limit=200")
+      .then(response => response.json())
+      .then(data => {
+        createGraph("coconut temp", data, function(d) { return d.content.temp; });
+        createGraph("coconut load", data, function(d) { 
+          try {return (d.content.load.recent) * 100;}
+          catch(e) {return 0;}
+        });
+        createGraph("coconut mem usage", data, function(d) { 
+          try {return (d.content.mem.used/d.content.mem.total) * 100;}
+          catch(e) {return 0;}
+        }, 0, 100);
+      });
+    fetch("http://avocado.glenmurphy.com:5706/?type=avocado-health&limit=200")
+      .then(response => response.json())
+      .then(data => {
+        //createGraph(data, function(d) { return d.content.temp; });
+        createGraph("avocado load", data, function(d) { 
+          try {return (d.content.load.recent) * 100;}
+          catch(e) {return 0;}
+        });
+        createGraph("avocado mem usage", data, function(d) { 
+          try {return (d.content.mem.used/d.content.mem.total) * 100;}
+          catch(e) {return 0;}
+        }, 0, 100);
+      });
+  </script>
+</html>

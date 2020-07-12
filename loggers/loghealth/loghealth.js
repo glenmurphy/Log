@@ -48,9 +48,11 @@ function getMem() {
     var stdout = childProcess.execSync("free -m").toString();
     var data = stdout.split("\n")[1].split(/\s+/);
     var total = data[1];
-    var free = data[2];
+    var used = data[2];
+    var free = data[3];
     return {
       total : total,
+      used : used,
       free : free
     }
   } catch(e) {
