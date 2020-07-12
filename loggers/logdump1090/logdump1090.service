@@ -1,0 +1,18 @@
+# Place in /etc/systemd/system/[name].service
+# sudo systemctl enable [name]
+# sudo systemctl start [name]
+
+[Unit] 
+Description=Log Health
+Documentation=http://dev.glenmurphy.com/
+After=network.target 
+
+[Service]
+Type=simple 
+User=glen 
+WorkingDirectory=/home/glen/logdump1090/
+ExecStart=/usr/bin/node /home/glen/logdump1090/logdump1090.js
+Restart=always 
+
+[Install] 
+WantedBy=multi-user.target   
