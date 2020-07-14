@@ -74,6 +74,12 @@
           }
           catch(e) {return 0;}
         }, 0, 100);
+        createGraph("coconut ping", data, function(d) { 
+          try {
+            if (!d.content.ping) {return null;}
+            return (d.content.ping.min);}
+          catch(e) {return 0;}
+        }, 0);
       });
  
     fetch("http://avocado.glenmurphy.com:5706/?type=avocado-health&limit=200")
@@ -90,6 +96,12 @@
             return (d.content.mem.used/d.content.mem.total) * 100;}
           catch(e) {return 0;}
         }, 0, 100);
+        createGraph("avocado ping", data, function(d) { 
+          try {
+            if (!d.content.ping) {return null;}
+            return (d.content.ping.min);}
+          catch(e) {return 0;}
+        }, 0);
       });
       fetch("http://avocado.glenmurphy.com:5706/?type=coconut-dump1090&limit=200")
       .then(response => response.json())

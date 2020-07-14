@@ -14,7 +14,7 @@ function post(data) {
 
   var dataString = JSON.stringify(data);
   var options = {
-    hostname: 'avocado.glenmurphy.com',
+    hostname: 'logs.glenmurphy.com',
     port: 5706,
     path: '/',
     method: 'POST',
@@ -87,21 +87,42 @@ function getLoad() {
   }
 }
 
+function getPing() {
+  try {
+    var stdout = childProcess.execSync("ping -c 2 google.com").toString();
+    var s = stdout.split("\n");
+    s = s[s.length - 2].split(/\s+/);
+    var data = s[s.length - 2].split("/");
+    return {
+      min : data[0],
+      avg : data[1],
+      max : data[2],
+      mdev : data[3],
+    }
+  } catch(e) {
+    console.log("getPing() error");
+    return "error"
+  }
+}
+
 function monitor(seconds) {
   var recordTemps = fs.existsSync("/opt/vc/bin/vcgencmd");
   var hostname = os.hostname();
   var type = hostname + '-health';
 
   function mon() {
+    if (debug) console.log("DEBUG MODE ON");
     var content = {};
 
     if (recordTemps) 
       content.temp = getTemps();
     content.mem = getMem();
     content.load = getLoad();
+    content.ping = getPing();
 
     post({
       type : type,
+      version : 2,
       content : content
     });
   }
