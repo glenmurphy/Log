@@ -94,6 +94,7 @@ Logs.prototype.handleGet = function(res, data) {
       res.end();
     });
   }
+  // TODO: Add a g= query for graph output
 }
 
 Logs.prototype.handlePost = function(data) {
