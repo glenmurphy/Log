@@ -65,20 +65,20 @@
         // format data
         createGraph("coconut temp", data, function(d) { return d.content.temp; });
         createGraph("coconut load", data, function(d) { 
-          try {return (d.content.load.recent) * 100;}
+          try {return parseFloat(d.content.load.recent) * 100;}
           catch(e) {return 0;}
         });
         createGraph("coconut mem usage", data, function(d) { 
           try {
             if (!d.content.mem.used) {return 0;}
-            return (d.content.mem.used/d.content.mem.total) * 100;
+            return parseFloat(d.content.mem.used/d.content.mem.total) * 100;
           }
           catch(e) {return 0;}
         }, 0, 100);
         createGraph("coconut ping", data, function(d) { 
           try {
             if (!d.content.ping) {return null;}
-            return (d.content.ping.min);}
+            return parseFloat(d.content.ping.min);}
           catch(e) {return 0;}
         }, 0);
       });
@@ -88,13 +88,13 @@
       .then(data => {
         //createGraph(data, function(d) { return d.content.temp; });
         createGraph("avocado load", data, function(d) { 
-          try {return (d.content.load.recent) * 100;}
+          try {return parseFloat(d.content.load.recent) * 100;}
           catch(e) {return 0;}
         });
         createGraph("avocado mem usage", data, function(d) { 
           try {
             if (!d.content.mem.used) {return 0;}
-            return (d.content.mem.used/d.content.mem.total) * 100;}
+            return parseFloat(d.content.mem.used/d.content.mem.total) * 100;}
           catch(e) {return 0;}
         }, 0, 100);
         createGraph("avocado ping", data, function(d) { 
@@ -108,7 +108,7 @@
       .then(response => response.json())
       .then(data => {
         createGraph("aircraft count", data, function(d) { 
-          try {return (d.content.count);}
+          try {return parseFloat(d.content.count);}
           catch(e) {return 0;}
         });
       });
