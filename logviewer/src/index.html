@@ -39,8 +39,9 @@
         min = 0
       }
       if (!max) {
-        max = d3.max(data, valueFn);
+        max = Math.ceil(d3.max(data, valueFn)) * 1.5;
       }
+
       var y = d3.scaleLinear()
         .domain([min, max])
         .range([ height, 0 ]);
@@ -103,7 +104,7 @@
           catch(e) {return 0;}
         }, 0);
       });
-      fetch("http://avocado.glenmurphy.com:5706/?type=coconut-dump1090&limit=200")
+      fetch("http://avocado.glenmurphy.com:5706/?type=coconut-dump1090&limit=1000")
       .then(response => response.json())
       .then(data => {
         createGraph("aircraft count", data, function(d) { 
