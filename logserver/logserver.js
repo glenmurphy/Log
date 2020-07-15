@@ -66,7 +66,7 @@ Logs.prototype.selectQuery = function(query, limit, callback) {
 
 
 Logs.prototype.handleGet = function(res, data) {
-  var limit = data.limit ? Math.min(data.limit, 100) : 10;
+  var limit = data.limit ? Math.min(data.limit, 500) : 10;
 
   if (data.type) {
     this.selectType(data.type, limit, function(e, r) {
