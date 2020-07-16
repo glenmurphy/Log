@@ -1,21 +1,26 @@
 <html>
-  <script src="https://d3js.org/d3.v5.js"></script>
+  <head>
+    <script src="https://d3js.org/d3.v5.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500&display=swap" rel="stylesheet" />
+    <style type="text/css">
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    </style>
+  </head>
   <body>
     <div id="graph" style="background-color:#eee;"></div>
   </body>
   <script>
-    function createGraph(title, data, valueFn, min, max) {
-      var d = document.createElement('div');
-      var titleNode = document.createElement('div');
-      titleNode.appendChild(document.createTextNode(title));
-      d.appendChild(titleNode);
+    function createGraph(title, data, valueFn, suffix, min, max) {
+      var div = document.createElement('div');
       
       // https://www.d3-graph-gallery.com/graph/line_basic.html
-      var margin = {top: 20, right: 20, bottom: 40, left: 40},
+      var margin = {top: 20, right: 30, bottom: 40, left: 20},
           width = 320 - margin.left - margin.right,
           height = 240 - margin.top - margin.bottom;
 
-      var svg = d3.select(d)
+      var svg = d3.select(div)
         .append("svg")
           .attr("width", width + margin.left + margin.right)
           .attr("height", height + margin.top + margin.bottom)
@@ -34,7 +39,7 @@
         .attr("transform", "translate(0," + height + ")")
         .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%H:%M")));
 
-      // 
+      
       if (!min) {
         min = 0
       }
@@ -42,45 +47,72 @@
         max = Math.ceil(d3.max(data, valueFn)) * 1.5;
       }
 
+      // Draw the vertical axis
       var y = d3.scaleLinear()
         .domain([min, max])
         .range([ height, 0 ]);
       svg.append("g")
-        .call(d3.axisLeft(y));
+        .call(d3.axisRight(y)).attr("transform", "translate("+width+",0)");
 
+      // Draw the line
       svg.append("path")
         .datum(data)
         .attr("fill", "none")
-        .attr("stroke", "steelblue")
-        .attr("stroke-width", 1.5)
+        .attr("stroke", "#36c")
+        .attr("stroke-width", 2)
         .attr("d", d3.line()
           .x(function(d) { return x(new Date(d.date)) })
           .y(function(d) { return y(valueFn(d)) })
           );
-      document.body.appendChild(d);
+
+      // Draw the title
+      svg.append("text")
+        .attr("x", 0)             
+        .attr("y", 20)
+        .attr("text-anchor", "left")
+        .style("font-size", "16px")
+        .text(title);
+
+      // Draw most recent entry
+      svg.append("text")
+        .attr("x", 0)             
+        .attr("y", 20)
+        .attr("text-anchor", "left")
+        .style("font-size", "16px")
+        .text(title);
+
+      svg.append("text")
+        .attr("x", 0)             
+        .attr("y", 50)
+        .attr("text-anchor", "left")
+        .style("font-size", "24px")
+        .style("fill", "#36c")
+        .text(Math.round(valueFn(data[0])) + suffix);
+
+      document.body.appendChild(div);
     }
     fetch("http://avocado.glenmurphy.com:5706/?type=coconut-health&limit=200")
       .then(response => response.json())
       .then(data => {
         // format data
-        createGraph("coconut temp", data, function(d) { return d.content.temp; });
+        createGraph("coconut temp", data, function(d) { return d.content.temp; }, "F");
         createGraph("coconut load", data, function(d) { 
           try {return parseFloat(d.content.load.recent) * 100;}
           catch(e) {return 0;}
-        });
+        }, "%");
         createGraph("coconut mem usage", data, function(d) { 
           try {
             if (!d.content.mem.used) {return 0;}
             return parseFloat(d.content.mem.used/d.content.mem.total) * 100;
           }
           catch(e) {return 0;}
-        }, 0, 100);
+        }, "%", 0, 100);
         createGraph("coconut ping", data, function(d) { 
           try {
             if (!d.content.ping) {return null;}
             return parseFloat(d.content.ping.min);}
           catch(e) {return 0;}
-        }, 0);
+        }, "ms", 0);
       });
  
     fetch("http://avocado.glenmurphy.com:5706/?type=avocado-health&limit=200")
@@ -90,19 +122,19 @@
         createGraph("avocado load", data, function(d) { 
           try {return parseFloat(d.content.load.recent) * 100;}
           catch(e) {return 0;}
-        });
+        }, "%");
         createGraph("avocado mem usage", data, function(d) { 
           try {
             if (!d.content.mem.used) {return 0;}
             return parseFloat(d.content.mem.used/d.content.mem.total) * 100;}
           catch(e) {return 0;}
-        }, 0, 100);
+        }, "%", 0, 100);
         createGraph("avocado ping", data, function(d) { 
           try {
             if (!d.content.ping) {return null;}
             return (d.content.ping.min);}
           catch(e) {return 0;}
-        }, 0);
+        }, "ms", 0);
       });
       fetch("http://avocado.glenmurphy.com:5706/?type=coconut-dump1090&limit=1000")
       .then(response => response.json())
@@ -110,7 +142,7 @@
         createGraph("aircraft count", data, function(d) { 
           try {return parseFloat(d.content.count);}
           catch(e) {return 0;}
-        });
+        }, "");
       });
   </script>
 </html>
