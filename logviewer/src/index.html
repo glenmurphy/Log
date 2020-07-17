@@ -9,12 +9,13 @@
     </style>
   </head>
   <body>
-    <div id="graph" style="background-color:#eee;"></div>
   </body>
   <script>
-    function createGraph(title, data, valueFn, suffix, min, max) {
+    function createGraph(conf) {
+      // title, data, valueFn, suffix, min, max
       var div = document.createElement('div');
-      
+      var data = conf.data;
+
       // https://www.d3-graph-gallery.com/graph/line_basic.html
       var margin = {top: 20, right: 30, bottom: 40, left: 20},
           width = 320 - margin.left - margin.right,
@@ -39,13 +40,8 @@
         .attr("transform", "translate(0," + height + ")")
         .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%H:%M")));
 
-      
-      if (!min) {
-        min = 0
-      }
-      if (!max) {
-        max = Math.ceil(d3.max(data, valueFn)) * 1.5;
-      }
+      var min = conf.min ? conf.min : 0;
+      var max = conf.max ? conf.max : Math.ceil(d3.max(data, conf.fn)) * 1.5;
 
       // Draw the vertical axis
       var y = d3.scaleLinear()
@@ -54,6 +50,33 @@
       svg.append("g")
         .call(d3.axisRight(y)).attr("transform", "translate("+width+",0)");
 
+      // Gradient fill
+      var g = svg.append("defs").append("linearGradient")
+        .attr("id", "fillgradient")//id of the gradient
+        .attr("x1", "0%")
+        .attr("x2", "0%")
+        .attr("y1", "0%")
+        .attr("y2", "100%")//since its a vertical linear gradient 
+      g.append("stop")
+        .attr("offset", "0%")
+        .style("stop-color", "#cdf")//end in red
+        .style("stop-opacity", 1)
+      g.append("stop")
+        .attr("offset", "100%")
+        .style("stop-color", "#fff")//start in blue
+        .style("stop-opacity", 0);
+
+      svg.append("path")
+        .datum(data)
+        .attr("class", "area")
+        .attr("d", d3.area()
+          .curve(d3.curveMonotoneX)
+          .x(function(d) { return x(new Date(d.date)) })
+          .y0(height)
+          .y1(function(d) { return y(conf.fn(d)) })
+          )
+        .style("fill", "url(#fillgradient)");
+
       // Draw the line
       svg.append("path")
         .datum(data)
@@ -61,88 +84,126 @@
         .attr("stroke", "#36c")
         .attr("stroke-width", 2)
         .attr("d", d3.line()
+          .curve(d3.curveMonotoneX)
           .x(function(d) { return x(new Date(d.date)) })
-          .y(function(d) { return y(valueFn(d)) })
+          .y(function(d) { return y(conf.fn(d)) })
           );
-
       // Draw the title
       svg.append("text")
         .attr("x", 0)             
         .attr("y", 20)
         .attr("text-anchor", "left")
         .style("font-size", "16px")
-        .text(title);
+        .text(conf.title);
 
       // Draw most recent entry
-      svg.append("text")
-        .attr("x", 0)             
-        .attr("y", 20)
-        .attr("text-anchor", "left")
-        .style("font-size", "16px")
-        .text(title);
-
       svg.append("text")
         .attr("x", 0)             
         .attr("y", 50)
         .attr("text-anchor", "left")
         .style("font-size", "24px")
         .style("fill", "#36c")
-        .text(Math.round(valueFn(data[0])) + suffix);
-
+        .text(Math.round(conf.fn(data[0])) + conf.suffix);
+      
       document.body.appendChild(div);
     }
     fetch("http://avocado.glenmurphy.com:5706/?type=coconut-health&limit=200")
       .then(response => response.json())
-      .then(data => {
+      .then(function(data) {
         // format data
-        createGraph("coconut temp", data, function(d) { return d.content.temp; }, "F");
-        createGraph("coconut load", data, function(d) { 
-          try {return parseFloat(d.content.load.recent) * 100;}
-          catch(e) {return 0;}
-        }, "%");
-        createGraph("coconut mem usage", data, function(d) { 
-          try {
-            if (!d.content.mem.used) {return 0;}
-            return parseFloat(d.content.mem.used/d.content.mem.total) * 100;
-          }
-          catch(e) {return 0;}
-        }, "%", 0, 100);
-        createGraph("coconut ping", data, function(d) { 
-          try {
-            if (!d.content.ping) {return null;}
-            return parseFloat(d.content.ping.min);}
-          catch(e) {return 0;}
-        }, "ms", 0);
+        createGraph({
+          title : "coconut temp",
+          data : data,
+          fn : function(d) { return d.content.temp; },
+          suffix : "F"
+        });
+        createGraph({
+          title : "coconut load",
+          data : data,
+          fn : function(d) { 
+            try {return parseFloat(d.content.load.recent) * 100;}
+            catch(e) {return 0;}
+          },
+          suffix : "%"
+        });
+        createGraph({
+          title : "coconut mem usage",
+          data : data,
+          fn : function(d) { 
+            try {
+              if (!d.content.mem.used) {return 0;}
+              return parseFloat(d.content.mem.used/d.content.mem.total) * 100;
+            }
+            catch(e) {return 0;}
+          },
+          suffix : "%",
+          min : 0,
+          max : 100
+        });
+        createGraph({
+          title : "coconut ping",
+          data : data,
+          fn : function(d) { 
+            try {
+              if (!d.content.ping) {return null;}
+              return parseFloat(d.content.ping.avg);}
+            catch(e) {return 0;}
+          },
+          suffix : "ms",
+          min : 0
+        });
       });
  
     fetch("http://avocado.glenmurphy.com:5706/?type=avocado-health&limit=200")
       .then(response => response.json())
       .then(data => {
         //createGraph(data, function(d) { return d.content.temp; });
-        createGraph("avocado load", data, function(d) { 
-          try {return parseFloat(d.content.load.recent) * 100;}
-          catch(e) {return 0;}
-        }, "%");
-        createGraph("avocado mem usage", data, function(d) { 
-          try {
-            if (!d.content.mem.used) {return 0;}
-            return parseFloat(d.content.mem.used/d.content.mem.total) * 100;}
-          catch(e) {return 0;}
-        }, "%", 0, 100);
-        createGraph("avocado ping", data, function(d) { 
-          try {
-            if (!d.content.ping) {return null;}
-            return (d.content.ping.min);}
-          catch(e) {return 0;}
-        }, "ms", 0);
+        createGraph({
+          title : "avocado load",
+          data : data,
+          fn : function(d) { 
+            try {return parseFloat(d.content.load.recent) * 100;}
+            catch(e) {return 0;}
+          },
+          suffix : "%"
+        });
+        createGraph({
+          title : "avocado mem usage",
+          data : data,
+          fn : function(d) { 
+            try {
+              if (!d.content.mem.used) {return 0;}
+              return parseFloat(d.content.mem.used/d.content.mem.total) * 100;}
+            catch(e) {return 0;}
+          },
+          suffix : "%",
+          min : 0,
+          max : 100
+        });
+        createGraph({
+          title : "avocado ping",
+          data : data,
+          fn : function(d) { 
+            try {
+              if (!d.content.ping) {return null;}
+              return (d.content.ping.avg);}
+            catch(e) {return 0;}
+          },
+          suffix : "ms",
+          min : 0
+        });
       });
       fetch("http://avocado.glenmurphy.com:5706/?type=coconut-dump1090&limit=1000")
       .then(response => response.json())
       .then(data => {
-        createGraph("aircraft count", data, function(d) { 
-          try {return parseFloat(d.content.count);}
-          catch(e) {return 0;}
-        }, "");
+        createGraph({
+          title : "aircraft count",
+          data : data,
+          fn : function(d) { 
+            try {return parseFloat(d.content.count);}
+            catch(e) {return 0;}
+          }
+        });
       });
   </script>
 </html>
