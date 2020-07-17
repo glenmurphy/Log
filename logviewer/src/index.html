@@ -1,5 +1,6 @@
 <html>
   <head>
+    <meta charset="UTF-8">
     <script src="https://d3js.org/d3.v5.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500&display=swap" rel="stylesheet" />
     <style type="text/css">
@@ -115,7 +116,7 @@
           title : "coconut temp",
           data : data,
           fn : function(d) { return d.content.temp; },
-          suffix : "F"
+          suffix : "°C"
         });
         createGraph({
           title : "coconut load",
@@ -202,7 +203,8 @@
           fn : function(d) { 
             try {return parseFloat(d.content.count);}
             catch(e) {return 0;}
-          }
+          },
+          suffix : ""
         });
       });
   </script>
